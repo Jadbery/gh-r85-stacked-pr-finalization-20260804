@@ -1,0 +1,25 @@
+name: R85 merged event control
+
+on:
+  pull_request:
+    types: [closed]
+
+permissions:
+  contents: read
+  issues: write
+
+jobs:
+  record-merged-event:
+    if: github.event.pull_request.merged == true
+    runs-on: ubuntu-latest
+    steps:
+      - name: Record trusted merged event
+        env:
+          GH_TOKEN: ${{ github.token }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+          MERGE_SHA: ${{ github.event.pull_request.merge_commit_sha }}
+          BASE_SHA: ${{ github.event.pull_request.base.sha }}
+        run: |
+          gh api --method POST "repos/${GITHUB_REPOSITORY}/issues" \
+            -f title="R85 trusted merged-event consumer fired for PR ${PR_NUMBER}" \
+            -f body="GitHub delivered merged=true. merge_commit_sha=${MERGE_SHA}; event_base_sha=${BASE_SHA}; run_id=${GITHUB_RUN_ID}."
