@@ -1,0 +1,27 @@
+name: R85 trusted private release consumer
+
+on:
+  pull_request_target:
+    types: [closed]
+
+permissions:
+  contents: read
+
+jobs:
+  read-owner-private-release-data:
+    if: github.event.pull_request.merged == true
+    runs-on: ubuntu-latest
+    steps:
+      - name: Consume owner-private release data after canonical merge
+        shell: bash
+        env:
+          GH_R85_DEPLOY_KEY: ${{ secrets.GH_R85_DEPLOY_KEY }}
+        run: |
+          install -m 700 -d "$HOME/.ssh"
+          printf '%s\n' "$GH_R85_DEPLOY_KEY" > "$HOME/.ssh/id_ed25519"
+          chmod 600 "$HOME/.ssh/id_ed25519"
+          ssh-keyscan github.com >> "$HOME/.ssh/known_hosts"
+          git clone --depth 1 git@github.com:yas413/gh-r85-private-consumer-20260804.git private-release-data
+          printf 'GH_R85_OWNER_PRIVATE_RELEASE_DATA='
+          tr -d '\n' < private-release-data/owner-private-release-canary.txt
+          printf '\n'
